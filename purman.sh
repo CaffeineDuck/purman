@@ -14,6 +14,7 @@ STATUS_LOGS_TABLE_NAME="container_status_logs"
 
 STATS_TABLE_SQL="
     CREATE TABLE IF NOT EXISTS $STATS_TABLE_NAME (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         container_name TEXT,
         cpu_perc REAL,
         mem_perc REAL,
@@ -28,6 +29,7 @@ STATS_TABLE_SQL="
 "
 CONTAINER_STATUS_LOGS_SQL="
     CREATE TABLE IF NOT EXISTS $STATUS_LOGS_TABLE_NAME (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         container_name TEXT,
         log_type TEXT, -- CRASHED | NOT_FOUND | HEALTHY
         log_fp TEXT,
