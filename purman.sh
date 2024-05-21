@@ -2,10 +2,10 @@
 
 set -e
 
-: ${WAIT_TIME:=15}
-: ${LOG_LEVEL:="INFO"}
-: ${DIR_PATH:="$HOME/.purman"}
-: ${LOG_LINES:=200}
+LOG_LEVEL=${LOG_LEVEL:-INFO}
+WAIT_TIME=${WAIT_TIME:-15}
+DIR_PATH=${DIR_PATH:-"$HOME/.purman"}
+LOG_LINES=${LOG_LINES:-200}
 
 DB_PATH="$DIR_PATH/docker_stats.db"
 LOGS_DIR="$DIR_PATH/logs"
