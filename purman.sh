@@ -15,11 +15,14 @@ STATUS_LOGS_TABLE_NAME="container_status_logs"
 STATS_TABLE_SQL="
     CREATE TABLE IF NOT EXISTS $STATS_TABLE_NAME (
         container_name TEXT,
-        cpu_perc TEXT,
-        mem_usage INTEGER,
-        mem_perc TEXT,
-        net_io TEXT,
-        block_io TEXT,
+        cpu_perc REAL,
+        mem_perc REAL,
+        mem_usage REAL,
+        mem_capacity REAL,
+        net_input REAL,
+        net_output REAL,
+        block_input REAL,
+        block_output REAL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 "
@@ -54,13 +57,17 @@ _log_message() {
         [[ "$LOG_LEVEL" == "DEBUG" ]] && echo "$timestamp [DEBUG] $message"
         ;;
     INFO)
-        [[ "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo "$timestamp [INFO] $message"
+        [[ "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] &&
+            echo "$timestamp [INFO] $message"
         ;;
     WARN)
-        [[ "$LOG_LEVEL" == "WARN" || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo "$timestamp [WARN] $message"
+        [[ "$LOG_LEVEL" == "WARN" || "$LOG_LEVEL" == "INFO" ||
+            "$LOG_LEVEL" == "DEBUG" ]] && echo "$timestamp [WARN] $message"
         ;;
     ALARM)
-        [[ $LOG_LEVEL == "ALARM" || $LOG_LEVEL == "WARN" || $LOG_LEVEL == "INFO" || $LOG_LEVEL == "DEBUG" ]] && echo "$timestamp [ALARM] $message"
+        [[ $LOG_LEVEL == "ALARM" || $LOG_LEVEL == "WARN" ||
+            $LOG_LEVEL == "INFO" || $LOG_LEVEL == "DEBUG" ]] &&
+            echo "$timestamp [ALARM] $message"
         ;;
     ERROR)
         echo "$timestamp [ERROR] $message"
@@ -72,17 +79,19 @@ _log_message() {
 }
 
 _convert_to_bytes() {
-    local mem=$1
-    local value=$(echo $mem | awk '{
-        if ($0 ~ /KiB/) print $1 * (1024 ** 1);
-        else if ($0 ~ /MiB/) print $1 * (1024 ** 2);
-        else if ($0 ~ /GiB/) print $1 * (1024 ** 3);
-        else if ($0 ~ /TiB/) print $1 * (1024 ** 4);
-        else print $1
-    }')
-    echo $value
+    local value=$1
+    echo $value | awk '
+        /KiB/ {printf "%.0f", $1 * (1024 ** 1)}
+        /MiB/ {printf "%.0f", $1 * (1024 ** 2)}
+        /GiB/ {printf "%.0f", $1 * (1024 ** 3)}
+        /TiB/ {printf "%.0f", $1 * (1024 ** 4)}
+        /kB/ {printf "%.0f", $1 * (1000 ** 1)}
+        /MB/ {printf "%.0f", $1 * (1000 ** 2)}
+        /GB/ {printf "%.0f", $1 * (1000 ** 3)}
+        /TB/ {printf "%.0f", $1 * (1000 ** 4)}
+        /B/ {printf "%.0f", $1}
+    '
 }
-
 _validate_or_create_data_dir() {
     if [[ ! -d "$DIR_PATH" ]]; then
         _log_message "DEBUG" "Directory $DIR_PATH does not exist. Creating it..."
@@ -165,17 +174,38 @@ _insert_container_stats() {
     local cpu_perc=$2
     local mem_usage=$3
     local mem_perc=$4
-    local net_io=$5
-    local block_io=$6
+    local mem_capacity=$5
+    local net_input=$6
+    local net_output=$7
+    local block_input=$8
+    local block_output=$9
 
     _log_message "INFO" "Inserting stats for container $container_name."
 
-    sqlite3 $DB_PATH "
-        INSERT INTO $STATS_TABLE_NAME 
-            (container_name, cpu_perc, mem_usage, mem_perc, net_io, block_io) 
-        VALUES 
-            ('$container_name', '$cpu_perc', $mem_usage, '$mem_perc', '$net_io', '$block_io');
-    "
+    sqlite3 $DB_PATH <<-EOD
+        INSERT INTO $STATS_TABLE_NAME (
+            container_name,
+            cpu_perc,
+            mem_usage,
+            mem_perc,
+            mem_capacity,
+            net_input,
+            net_output,
+            block_input,
+            block_output
+        ) 
+        VALUES(
+            '$container_name',
+            $cpu_perc,
+            $mem_usage, 
+            $mem_perc,
+            $mem_capacity,
+            $net_input,
+            $net_output,
+            $block_input,
+            $block_output
+        );
+EOD
 }
 
 _check_container() {
@@ -213,10 +243,35 @@ function _dump_stats_to_db() {
     echo "$docker_stats" |
         jq -r '. | [.Name, .CPUPerc, .MemUsage, .MemPerc, .NetIO, .BlockIO] | @csv' |
         while IFS=, read -r name cpu_perc mem_usage mem_perc net_io block_io; do
-            mem_usage_str=$(echo $mem_usage | awk -F' ' '{print $1}')
-            mem_usage_bytes=$(_convert_to_bytes $mem_usage_str)
-            _insert_container_stats $name $cpu_perc $mem_usage_bytes $mem_perc $net_io $block_io
+            local name=$(echo $name | tr -d '" ')
+            local cpu_perc=$(echo $cpu_perc | tr -d '"% ')
+            local mem_perc=$(echo $mem_perc | tr -d '"% ')
 
+            local mem_usage_str=$(echo $mem_usage | awk -F' / ' '{print $1}' | tr -d '" ')
+            local mem_capacity_str=$(echo $mem_usage | awk -F' / ' '{print $2}' | tr -d '" ')
+            local mem_usage_bytes=$(_convert_to_bytes $mem_usage_str)
+            local mem_capacity_bytes=$(_convert_to_bytes $mem_capacity_str)
+
+            local net_input=$(echo $net_io | awk -F' / ' '{print $1}' | tr -d '" ')
+            local net_output=$(echo $net_io | awk -F' / ' '{print $2}' | tr -d '" ')
+            local net_input_bytes=$(_convert_to_bytes $net_input)
+            local net_output_bytes=$(_convert_to_bytes $net_output)
+
+            local block_input=$(echo $block_io | awk -F' / ' '{print $1}' | tr -d '" ')
+            local block_output=$(echo $block_io | awk -F' / ' '{print $2}' | tr -d '" ')
+            local block_input_bytes=$(_convert_to_bytes $block_input)
+            local block_output_bytes=$(_convert_to_bytes $block_output)
+
+            _insert_container_stats \
+                "$name" \
+                "$cpu_perc" \
+                "$mem_usage_bytes" \
+                "$mem_perc" \
+                "$mem_capacity_bytes" \
+                "$net_input_bytes" \
+                "$net_output_bytes" \
+                "$block_input_bytes" \
+                "$block_output_bytes"
         done
 }
 
