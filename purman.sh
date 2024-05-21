@@ -59,6 +59,9 @@ _log_message() {
     WARN)
         [[ "$LOG_LEVEL" == "WARN" || "$LOG_LEVEL" == "INFO" || "$LOG_LEVEL" == "DEBUG" ]] && echo "$timestamp [WARN] $message"
         ;;
+    ALARM)
+        [[ $LOG_LEVEL == "ALARM" || $LOG_LEVEL == "WARN" || $LOG_LEVEL == "INFO" || $LOG_LEVEL == "DEBUG" ]] && echo "$timestamp [ALARM] $message"
+        ;;
     ERROR)
         echo "$timestamp [ERROR] $message"
         ;;
@@ -120,7 +123,7 @@ _validate_or_fetch_container_names() {
 _insert_container_status_log() {
     local container_name=$1
     local log_type=$2
-    local log_message=$3
+    local log_error_message=$3
     local log_fp=""
 
     _log_message "DEBUG" "Checking latest log for container $container_name ($log_type)"
@@ -129,7 +132,10 @@ _insert_container_status_log() {
             WHERE container_name='$container_name'
             ORDER BY timestamp DESC LIMIT 1
     " | tr -d '[:space:]')
-    _log_message "DEBUG" "Existing log type for container $container_name: '$existing_log'"
+
+    if [[ -z "$existing_log" ]]; then
+        _log_message "DEBUG" "Existing log type for container $container_name: '$existing_log'"
+    fi
 
     if [[ "$existing_log" == "$log_type" ]]; then
         _log_message "INFO" "Latest log type for container $container_name is already $log_type, no new entry added."
@@ -137,17 +143,20 @@ _insert_container_status_log() {
     fi
 
     if [[ "$log_type" == "CRASHED" ]]; then
-        local random_string=$(tr -dc 'a-zA-Z0-9' </dev/urandom | head -c $length)
+        local random_string=$(openssl rand -hex 12)
         log_fp="$LOGS_DIR/$container_name-$random_string.log"
-        echo "$log_message" >$log_fp
+
+        docker logs --tail $LOG_LINES $container_name &>$log_fp
+        _log_message "ALARM" "Container $container_name has crashed. Log file: $log_fp"
     fi
 
     _log_message "INFO" "Inserting status log for container $container_name ($log_type)"
+
     sqlite3 $DB_PATH "
-        INSERT INTO $STATUS_LOGS_TABLE_NAME 
-            (container_name, log_type, log_fp) 
-        VALUES 
-            ('$container_name', '$log_type', '$log_fp');
+    INSERT INTO $STATUS_LOGS_TABLE_NAME 
+        (container_name, log_type, log_fp) 
+    VALUES 
+        ('$container_name', '$log_type', '$log_fp');
     "
 }
 
@@ -159,7 +168,7 @@ _insert_container_stats() {
     local net_io=$5
     local block_io=$6
 
-    _log_message "DEBUG" "Inserting stats for container $container_name."
+    _log_message "INFO" "Inserting stats for container $container_name."
 
     sqlite3 $DB_PATH "
         INSERT INTO $STATS_TABLE_NAME 
@@ -200,7 +209,7 @@ _check_all_containers_are_healthy() {
 function _dump_stats_to_db() {
     _check_all_containers_are_healthy
 
-    docker_stats=$(docker stats --no-stream --format "{{json .}}" $CONTAINER_NAMES)
+    docker_stats=$(docker stats --no-stream --format "{{ json . }}" $CONTAINER_NAMES)
     echo "$docker_stats" |
         jq -r '. | [.Name, .CPUPerc, .MemUsage, .MemPerc, .NetIO, .BlockIO] | @csv' |
         while IFS=, read -r name cpu_perc mem_usage mem_perc net_io block_io; do
@@ -219,12 +228,11 @@ function _dump_status_logs_to_db() {
         _log_message "DEBUG" "Container $container_name status: $status"
 
         if [ $status -eq 200 ]; then
-            _insert_container_status_log $container_name "HEALTHY" ""
+            _insert_container_status_log $container_name "HEALTHY"
         elif [ $status -eq 404 ]; then
-            _insert_container_status_log $container_name "NOT_FOUND" ""
+            _insert_container_status_log $container_name "NOT_FOUND"
         elif [ $status -eq 500 ]; then
-            local log_message=$(docker logs --tail $LOG_LINES $container_name | sed "s/'/''/g")
-            _insert_container_status_log $container_name "CRASHED" "$log_message"
+            _insert_container_status_log $container_name "CRASHED"
         fi
     done
 }
