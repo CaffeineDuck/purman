@@ -7,12 +7,24 @@ DB_PATH="$DIR_PATH/docker_stats.db"
 STATUS_LOGS_TABLE_NAME="container_status_logs"
 LATEST_PROCESSED_ID_FILE="$DIR_PATH/latest_monitor_processed_id"
 
+_get_latest_dumped_id() {
+  sqlite3 $DB_PATH "SELECT id from $STATUS_LOGS_TABLE_NAME ORDER BY id DESC LIMIT 1"
+}
+
 _get_latest_processed_id() {
+  local latest_id=0
   if [[ -f "$LATEST_PROCESSED_ID_FILE" ]]; then
-    cat "$LATEST_PROCESSED_ID_FILE"
-  else
-    echo "0"
+    latest_id=$(cat "$LATEST_PROCESSED_ID_FILE")
   fi
+
+  if [[ ! -z "$latest_id" ]]; then
+    echo $latest_id
+    return 0
+  fi
+
+  local latest_id="$(_get_latest_dumped_id)"
+  echo "$latest_id" >"$LATEST_PROCESSED_ID_FILE"
+  echo "$latest_id"
 }
 
 _update_latest_processed_id() {

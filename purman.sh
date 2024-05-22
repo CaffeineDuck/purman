@@ -80,20 +80,22 @@ _log_message() {
     set -e
 }
 
-_convert_to_bytes() {
+function _convert_to_bytes() {
     local value=$1
     echo $value | awk '
-        /KiB/ {printf "%.0f", $1 * (1024 ** 1)}
-        /MiB/ {printf "%.0f", $1 * (1024 ** 2)}
-        /GiB/ {printf "%.0f", $1 * (1024 ** 3)}
-        /TiB/ {printf "%.0f", $1 * (1024 ** 4)}
-        /kB/ {printf "%.0f", $1 * (1000 ** 1)}
-        /MB/ {printf "%.0f", $1 * (1000 ** 2)}
-        /GB/ {printf "%.0f", $1 * (1000 ** 3)}
-        /TB/ {printf "%.0f", $1 * (1000 ** 4)}
-        /B/ {printf "%.0f", $1}
+        /KiB/ {printf "%.0f", $1 * 1024; exit}
+        /MiB/ {printf "%.0f", $1 * 1024 * 1024; exit}
+        /GiB/ {printf "%.0f", $1 * 1024 * 1024 * 1024; exit}
+        /TiB/ {printf "%.0f", $1 * 1024 * 1024 * 1024 * 1024; exit}
+        /kB/ {printf "%.0f", $1 * 1000; exit}
+        /MB/ {printf "%.0f", $1 * 1000 * 1000; exit}
+        /GB/ {printf "%.0f", $1 * 1000 * 1000 * 1000; exit}
+        /TB/ {printf "%.0f", $1 * 1000 * 1000 * 1000 * 1000; exit}
+        /B/ {printf "%.0f", $1; exit}
+        {print "Error: Unrecognized format"; exit 1}
     '
 }
+
 _validate_or_create_data_dir() {
     if [[ ! -d "$DIR_PATH" ]]; then
         _log_message "DEBUG" "Directory $DIR_PATH does not exist. Creating it..."
