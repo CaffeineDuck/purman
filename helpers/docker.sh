@@ -32,10 +32,10 @@ function get_container_status() {
 
   if [ $exit_code -ne 0 ]; then
     echo 404 # Container not found
-  elif [ "$running" == "false" ]; then
-    echo 500 # Container has crashed
-  else
+  elif [ "$running" == "true" ]; then
     echo 200 # Container is running
+  else
+    echo 500 # Container has crashed
   fi
 }
 

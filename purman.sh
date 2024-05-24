@@ -9,10 +9,12 @@ LOG_LINES=${LOG_LINES:-200}
 SCRIPT_NAME="Purman"
 SCRIPT_AUTHOR="CaffeineDuck <hello@samrid.me>"
 
+DB_DIR="$DIR_PATH/data"
+
+export SCRIPT_DIR=${SCRIPT_DIR:-"$DIR_PATH/bin"}
 export LOG_LEVEL=${LOG_LEVEL:-INFO}
-export DB_PATH="$DIR_PATH/docker_stats.db"
+export DB_PATH="$DB_DIR/docker_stats.db"
 export LOGS_DIR="$DIR_PATH/logs"
-export SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 
 # shellcheck source=helpers/logger.sh
 source $SCRIPT_DIR/helpers/logger.sh
@@ -31,13 +33,16 @@ log_message DEBUG "Importing helpers/docker.sh"
 source $SCRIPT_DIR/helpers/docker.sh
 
 # Handle exit gracefully with log
-trap handle_exit EXIT
+if [[ "$DEV_ENV" == "true" ]]; then
+    trap handle_exit EXIT
+fi
 
 # Requires helpers/docker.sh to be imported
 export CONTAINER_NAMES=${CONTAINER_NAMES:-"$(get_all_running_container_names)"}
 
 create_dir_if_not_exists "$DIR_PATH"
 create_dir_if_not_exists "$LOGS_DIR"
+create_dir_if_not_exists "$DB_DIR"
 
 create_tables_if_not_exists
 
@@ -129,10 +134,10 @@ function _dump_stats_to_db() {
 
 function _dump_status_logs_to_db() {
     for CONTAINER_NAME in $CONTAINER_NAMES; do
-        local status_str=$(get_container_status $container_name | tr -d -c 0-9)
+        local status_str=$(get_container_status $CONTAINER_NAME | tr -d -c 0-9)
         local status=$(($status_str))
 
-        log_message DEBUG "Container $container_name status: $status"
+        log_message DEBUG "Container $CONTAINER_NAME status: $status"
 
         if [ $status -eq 200 ]; then
             LOG_TYPE=HEALTHY _validate_and_insert_container_status_log
@@ -166,7 +171,6 @@ function continously_dump_status_logs() {
 
 HELP_TEXT="
 $SCRIPT_NAME - Docker container monitoring tool
-Author: $SCRIPT_AUTHOR
 
 Usage: $0 <command>
 
@@ -202,6 +206,5 @@ help)
 
     echo "Invalid command: $1"
     echo "$HELP_TEXT"
-    exit 1
     ;;
 esac
