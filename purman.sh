@@ -11,7 +11,7 @@ SCRIPT_AUTHOR="CaffeineDuck <hello@samrid.me>"
 
 DB_DIR="$DIR_PATH/data"
 
-export SCRIPT_DIR=${SCRIPT_DIR:-"$DIR_PATH/bin"}
+export SCRIPT_DIR=${SCRIPT_DIR:-"$HOME/.purman/bin"}
 export LOG_LEVEL=${LOG_LEVEL:-INFO}
 export DB_PATH="$DB_DIR/docker_stats.db"
 export LOGS_DIR="$DIR_PATH/logs"
