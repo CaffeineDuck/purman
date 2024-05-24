@@ -4,7 +4,7 @@ set -e
 
 BIN_DIR=/usr/local/bin
 INSTALL_DIR=$HOME/.purman/bin
-DOWNLOAD_DIR=/tmp/purman-repo
+DOWNLOAD_DIR=$(mktemp -d)
 GIT_REPO_URL="https://github.com/CaffeineDuck/purman.git"
 
 function _bare_install() {
