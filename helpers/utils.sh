@@ -11,6 +11,8 @@ for env_var in "${REQUIRED_ENV_VARS[@]}"; do
   fi
 done
 
+# shellcheck source=helpers/defaults.sh
+source $SCRIPT_DIR/helpers/defaults.sh
 # shellcheck source=helpers/logger.sh
 source $SCRIPT_DIR/helpers/logger.sh
 

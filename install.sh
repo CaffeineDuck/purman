@@ -22,6 +22,9 @@ function _bare_install() {
   echo "Creating a symlink to $INSTALL_DIR/purman.sh -> $BIN_DIR/purman"
   sudo ln -s $INSTALL_DIR/purman.sh $BIN_DIR/purman
 
+  echo "Creating a symlink to $INSTALL_DIR/helpers/db.sh -> $BIN_DIR/purman-db"
+  sudo ln -s $INSTALL_DIR/helpers/db.sh $BIN_DIR/purman-db
+
   echo "Purman installed successfully."
 }
 
@@ -48,11 +51,6 @@ function download_and_install() {
 }
 
 function cleanup() {
-  if [[ -d $DOWNLOAD_DIR ]]; then
-    echo "Deleting $DOWNLOAD_DIR"
-    rm -r $DOWNLOAD_DIR
-  fi
-
   if [[ -d $INSTALL_DIR ]]; then
     echo "Deleting $INSTALL_DIR"
     rm -r $INSTALL_DIR
@@ -61,6 +59,11 @@ function cleanup() {
   if [[ -L "$BIN_DIR/purman" ]]; then
     echo "Deleting $BIN_DIR/purman symlink."
     sudo rm $BIN_DIR/purman
+  fi
+
+  if [[ -L "$BIN_DIR/purman-db" ]]; then
+    echo "Deleting $BIN_DIR/purman-db symlink."
+    sudo rm $BIN_DIR/purman-db
   fi
 
   echo "Cleanup done."

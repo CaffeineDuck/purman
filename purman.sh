@@ -2,19 +2,13 @@
 
 set -e
 
-WAIT_TIME=${WAIT_TIME:-30}
-DIR_PATH=${DIR_PATH:-"$HOME/.purman"}
-LOG_LINES=${LOG_LINES:-200}
-
 SCRIPT_NAME="Purman"
 SCRIPT_AUTHOR="CaffeineDuck <hello@samrid.me>"
 
-DB_DIR="$DIR_PATH/data"
-
 export SCRIPT_DIR=${SCRIPT_DIR:-"$HOME/.purman/bin"}
-export LOG_LEVEL=${LOG_LEVEL:-INFO}
-export DB_PATH="$DB_DIR/docker_stats.db"
-export LOGS_DIR="$DIR_PATH/logs"
+
+# shellcheck source=helpers/defaults.sh
+source $SCRIPT_DIR/helpers/defaults.sh
 
 # shellcheck source=helpers/logger.sh
 source $SCRIPT_DIR/helpers/logger.sh

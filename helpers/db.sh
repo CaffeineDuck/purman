@@ -2,9 +2,15 @@
 
 set -e
 
+if [[ -z "$SCRIPT_DIR" ]]; then
+  echo "Environment variable SCRIPT_DIR is not set."
+  exit 1
+fi
+# shellcheck source=helpers/defaults.sh
+source $SCRIPT_DIR/helpers/defaults.sh
+
 REQUIRED_ENV_VARS=(
   DB_PATH
-  SCRIPT_DIR
 )
 
 for env_var in "${REQUIRED_ENV_VARS[@]}"; do
@@ -61,6 +67,26 @@ function get_next_dumped_status_logs_id() {
   _fetch_next_dump_id $STATUS_LOGS_TABLE_NAME $last_id
 }
 
+function get_container_stats_by_id() {
+  local id=$1
+  sqlite3 $DB_PATH "$(printf "$SELECT_CONTAINER_STATS_BY_ID_SQL" $id)"
+}
+
+function get_container_status_logs_by_id() {
+  local id=$1
+  sqlite3 $DB_PATH "$(printf "$SELECT_CONTAINER_STATUS_LOGS_BY_ID_SQL" $id)"
+}
+
+function get_latest_container_stats_by_name() {
+  local container_name=$1
+  sqlite3 $DB_PATH "$(printf "$SELECT_LATEST_CONTAINER_STATS_BY_NAME_SQL" $container_name)"
+}
+
+function get_latest_container_status_logs_by_name() {
+  local container_name=$1
+  sqlite3 $DB_PATH "$(printf "$SELECT_LATEST_CONTAINER_STATUS_LOGS_BY_NAME_SQL" $container_name)"
+}
+
 function get_latest_container_stats() {
   local latest_processed_id=$(get_latest_dumped_stats_id)
   sqlite3 $DB_PATH "$(printf "$SELECT_CONTAINER_STATS_BY_ID_SQL" $latest_processed_id)"
@@ -74,7 +100,7 @@ function get_next_container_stats() {
 
 function get_latest_container_status_logs() {
   local latest_processed_id=$(get_latest_dumped_status_logs_id)
-  sqlite3 $DB_PATH "$(printf "$SELECT_CONTAINER_STATS_BY_ID_SQL" $last_processed_id)"
+  sqlite3 $DB_PATH "$(printf "$SELECT_CONTAINER_STATUS_LOGS_BY_ID_SQL" $latest_processed_id)"
 }
 
 function get_next_container_status_logs() {

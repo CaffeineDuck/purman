@@ -4,7 +4,7 @@ WAIT_TIME=${WAIT_TIME:-15}
 DIR_PATH=${DIR_PATH:-"$HOME/.purman"}
 CONTAINER_NAMES=${CONTAINER_NAMES:-$(docker ps --format '{{.Names}}')}
 
-DB_PATH="$DIR_PATH/docker_stats.db"
+DB_PATH="$DIR_PATH/data/docker_stats.db"
 LOGS_DIR="$DIR_PATH/logs"
 STATS_TABLE_NAME="container_stats"
 STATUS_LOGS_TABLE_NAME="container_status_logs"

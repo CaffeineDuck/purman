@@ -42,37 +42,64 @@ export SELECT_LATEST_DUMP_ID_SQL="SELECT id from %s ORDER BY id DESC LIMIT 1"
 
 export SELECT_NEXT_DUMP_ID_SQL="SELECT id from %s HAVING id > %d ORDER BY id ASC"
 
-export SELECT_CONTAINER_STATUS_LOGS_BY_ID_SQL="
+export SELECT_CONTAINER_STATUS_LOGS_BY_ID_SQL=$(cat <<EOF
     SELECT id, container_name, log_type, log_fp, timestamp 
     FROM $STATUS_LOGS_TABLE_NAME
     WHERE id = %d;
-"
+EOF)
 
-export SELECT_CONTAINER_STATS_BY_ID_SQL="
-    SELECT (
+export SELECT_CONTAINER_STATS_BY_ID_SQL=$(cat <<EOF
+    SELECT 
         id,
         container_name,
         cpu_perc,
         mem_perc,
-        mem_usag,
+        mem_usage,
         mem_capacity,
         net_input,
         net_output,
         block_input,
         block_output,
         timestamp
-    ) 
     FROM $STATS_TABLE_NAME
     WHERE id = %d;
-"
+EOF)
 
-export SELECT_LATEST_LOG_TYPE_FOR_CONTAINER_SQL="
+
+export SELECT_LATEST_LOG_TYPE_FOR_CONTAINER_SQL=$(cat <<EOF
     SELECT log_type
     FROM $STATUS_LOGS_TABLE_NAME
     WHERE container_name = '%s'
     ORDER BY id DESC
     LIMIT 1;
-"
+EOF)
+
+export SELECT_LATEST_CONTAINER_STATS_BY_NAME_SQL=$(cat <<EOF
+    SELECT 
+        id,
+        container_name,
+        cpu_perc,
+        mem_perc,
+        mem_usage,
+        mem_capacity,
+        net_input,
+        net_output,
+        block_input,
+        block_output,
+        timestamp
+    FROM $STATS_TABLE_NAME
+    WHERE container_name = '%s'
+    ORDER BY id DESC
+    LIMIT 1;
+EOF)
+
+export SELECT_LATEST_CONTAINER_STATUS_LOGS_BY_NAME_SQL=$(cat <<EOF
+    SELECT id, container_name, log_type, log_fp, timestamp
+    FROM $STATUS_LOGS_TABLE_NAME
+    WHERE container_name = '%s'
+    ORDER BY id DESC
+    LIMIT 1;
+EOF)
 
 export INSERT_CONTAINER_STATS_SQL=$(cat <<EOF
     INSERT INTO $STATS_TABLE_NAME (

@@ -40,6 +40,9 @@ function log_message() {
   ERROR)
     echo "$timestamp [ERROR] $message"
     ;;
+  *)
+    echo "$timestamp [UNKNOWN] $message"
+    ;;
   esac
 
   # Re-enable exit on error for conditional checks

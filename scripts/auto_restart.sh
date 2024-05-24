@@ -3,7 +3,7 @@
 WAIT_TIME=${WAIT_TIME:-15}
 DIR_PATH=${DIR_PATH:-"$HOME/.purman"}
 
-DB_PATH="$DIR_PATH/docker_stats.db"
+DB_PATH="$DIR_PATH/data/docker_stats.db"
 STATUS_LOGS_TABLE_NAME="container_status_logs"
 LATEST_PROCESSED_ID_FILE="$DIR_PATH/latest_monitor_processed_id"
 
