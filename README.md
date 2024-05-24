@@ -10,18 +10,20 @@ curl -Ls https://raw.githubusercontent.com/CaffeineDuck/purman/main/install.sh |
 
 <details>
     <summary>
-        ## How to uninstall and update?
+        How to uninstall and update?
     </summary>
 
-    ### Uninstall
-    ```sh
-    curl -Ls https://raw.githubusercontent.com/CaffeineDuck/purman/main/install.sh | bash -s -- uninstall
-    ```
-    ### Update
-    ```sh
-    curl -Ls https://raw.githubusercontent.com/CaffeineDuck/purman/main/install.sh | bash -s -- update
+**Uninstall**
 
-    ```
+```sh
+curl -Ls https://raw.githubusercontent.com/CaffeineDuck/purman/main/install.sh | bash -s -- uninstall
+```
+
+**Update**
+
+```sh
+curl -Ls https://raw.githubusercontent.com/CaffeineDuck/purman/main/install.sh | bash -s -- update
+```
 
 </details>
 
