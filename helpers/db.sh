@@ -143,7 +143,7 @@ function insert_container_stats() {
   sqlite3 $DB_PATH \
     "$(
       printf "$INSERT_CONTAINER_STATS_SQL" $CONTAINER_NAME $CPU_PERC \
-        $MEM_USAGE $MEM_PERC $MEM_CAPACITY $NET_INPUT $NET_OUTPUT \
+        $MEM_PERC $MEM_USAGE $MEM_CAPACITY $NET_INPUT $NET_OUTPUT \
         $BLOCK_INPUT $BLOCK_OUTPUT
     )"
 
