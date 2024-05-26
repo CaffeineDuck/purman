@@ -26,7 +26,8 @@ export CREATE_CONTAINER_STATS_TABLE_SQL=$(cat <<EOF
         block_output REAL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
-EOF)
+EOF
+)
 
 export CREATE_CONTAINER_STATUS_LOGS_TABLE_SQL=$(cat <<EOF
     CREATE TABLE IF NOT EXISTS $STATUS_LOGS_TABLE_NAME (
@@ -36,7 +37,8 @@ export CREATE_CONTAINER_STATUS_LOGS_TABLE_SQL=$(cat <<EOF
         log_fp TEXT,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP
     );
-EOF)
+EOF
+)
 
 export SELECT_LATEST_DUMP_ID_SQL="SELECT id from %s ORDER BY id DESC LIMIT 1"
 
@@ -46,7 +48,8 @@ export SELECT_CONTAINER_STATUS_LOGS_BY_ID_SQL=$(cat <<EOF
     SELECT id, container_name, log_type, log_fp, timestamp 
     FROM $STATUS_LOGS_TABLE_NAME
     WHERE id = %d;
-EOF)
+EOF
+)
 
 export SELECT_CONTAINER_STATS_BY_ID_SQL=$(cat <<EOF
     SELECT 
@@ -63,7 +66,8 @@ export SELECT_CONTAINER_STATS_BY_ID_SQL=$(cat <<EOF
         timestamp
     FROM $STATS_TABLE_NAME
     WHERE id = %d;
-EOF)
+EOF
+)
 
 
 export SELECT_LATEST_LOG_TYPE_FOR_CONTAINER_SQL=$(cat <<EOF
@@ -72,7 +76,8 @@ export SELECT_LATEST_LOG_TYPE_FOR_CONTAINER_SQL=$(cat <<EOF
     WHERE container_name = '%s'
     ORDER BY id DESC
     LIMIT 1;
-EOF)
+EOF
+)
 
 export SELECT_LATEST_CONTAINER_STATS_BY_NAME_SQL=$(cat <<EOF
     SELECT 
@@ -91,7 +96,8 @@ export SELECT_LATEST_CONTAINER_STATS_BY_NAME_SQL=$(cat <<EOF
     WHERE container_name = '%s'
     ORDER BY id DESC
     LIMIT 1;
-EOF)
+EOF
+)
 
 export SELECT_LATEST_CONTAINER_STATUS_LOGS_BY_NAME_SQL=$(cat <<EOF
     SELECT id, container_name, log_type, log_fp, timestamp
@@ -99,7 +105,8 @@ export SELECT_LATEST_CONTAINER_STATUS_LOGS_BY_NAME_SQL=$(cat <<EOF
     WHERE container_name = '%s'
     ORDER BY id DESC
     LIMIT 1;
-EOF)
+EOF
+)
 
 export INSERT_CONTAINER_STATS_SQL=$(cat <<EOF
     INSERT INTO $STATS_TABLE_NAME (
@@ -123,7 +130,8 @@ export INSERT_CONTAINER_STATS_SQL=$(cat <<EOF
         %f,
         %f
     );
-EOF)
+EOF
+)
 
 export INSERT_CONTAINER_STATUS_LOG_SQL=$(cat <<EOF
     INSERT INTO $STATUS_LOGS_TABLE_NAME (
@@ -135,4 +143,5 @@ export INSERT_CONTAINER_STATUS_LOG_SQL=$(cat <<EOF
         '%s',
         '%s'
     );
-EOF)
+EOF
+)
